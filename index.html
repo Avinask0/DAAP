@@ -3,106 +3,160 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BUBBET DApp</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.1.0/web3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.6.2/dist/umd/index.min.js"></script>
+    <title>BUBBET Events</title>
+    <style>
+        body {
+            text-align: center;
+            font-family: 'Poppins', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            background: linear-gradient(135deg, #FFD700, #FFC0CB);
+            color: black;
+            padding: 12px;
+            border-radius: 12px;
+            display: inline-block;
+            font-size: 28px;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
+        }
+        h2 {
+            font-size: 22px;
+            color: #bbb;
+            margin-top: 8px;
+        }
+        .events-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            padding: 10px;
+        }
+        .event-box {
+            background: #121212;
+            padding: 15px;
+            width: 320px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+            text-align: center;
+            transition: transform 0.3s ease-in-out;
+        }
+        .event-box:hover {
+            transform: scale(1.05);
+        }
+        .open-event {
+            border: 3px solid limegreen;
+        }
+        .closed-event {
+            border: 3px solid crimson;
+        }
+        .event-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 10px;
+        }
+        .status {
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            padding: 5px;
+            display: inline-block;
+            border-radius: 8px;
+            width: 100px;
+            margin-bottom: 8px;
+        }
+        .open-status {
+            background-color: limegreen;
+        }
+        .closed-status {
+            background-color: crimson;
+        }
+        .result {
+            font-weight: bold;
+            color: #ffcc00;
+            margin-top: 5px;
+        }
+        .bet-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 12px;
+        }
+        .yes-btn, .no-btn {
+            padding: 10px 14px;
+            border: none;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 48%;
+            text-align: center;
+            transition: all 0.3s ease-in-out;
+        }
+        .yes-btn {
+            background-color: green;
+        }
+        .yes-btn:hover {
+            background-color: #00ff00;
+            color: black;
+        }
+        .no-btn {
+            background-color: red;
+        }
+        .no-btn:hover {
+            background-color: #ff5555;
+            color: black;
+        }
+    </style>
 </head>
 <body>
-    <h1>BUBBET DApp</h1>
-    <button onclick="connectWalletConnect()">Connect Wallet</button>
-    <p>Connected Account: <span id="account">Not connected</span></p>
+    <h1>BUBBET</h1>
+    <h2>Events</h2>
+    <div class="events-container" id="events"></div>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
+    <script>
+        const eventContractAddress = "0x3b05E97EEB98DBe6fB39b62545D3412fA2A792E7";
+        const eventABI = [
+            { "inputs": [{ "internalType": "uint256", "name": "eventId", "type": "uint256" }], "name": "getEventDetails", "outputs": [{ "internalType": "string", "name": "name", "type": "string" }, { "internalType": "bool", "name": "resolved", "type": "bool" }, { "internalType": "bool", "name": "outcome", "type": "bool" }, { "internalType": "uint256", "name": "totalBetsOnTrue", "type": "uint256" }, { "internalType": "uint256", "name": "totalBetsOnFalse", "type": "uint256" }], "stateMutability": "view", "type": "function" },
+            { "inputs": [], "name": "eventCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }
+        ];
+        async function fetchEvents() {
+            const provider = new ethers.providers.JsonRpcProvider("https://polygon-rpc.com");
+            const contract = new ethers.Contract(eventContractAddress, eventABI, provider);
+            const eventCount = await contract.eventCount();
+            const eventsContainer = document.getElementById("events");
+            eventsContainer.innerHTML = "";
+            for (let i = 1; i <= eventCount; i++) {
+                const event = await contract.getEventDetails(i);
+                const isClosed = event[1];
+                const eventStatus = isClosed ? "Closed" : "Open";
+                const betYes = (parseInt(event[3]) / 1e18).toFixed(2);
+                const betNo = (parseInt(event[4]) / 1e18).toFixed(2);
+                
+                let result = "";
+                if (isClosed) {
+                    result = `<p class="result">Result: ${event[2] ? "Yes" : "No"}</p>`;
+                }
 
-    <button onclick="getBalance()">Get BUBBET Balance</button>
-    <p>Balance: <span id="balance">0</span> BUBBET</p>
-
-    <input type="text" id="approveAmount" placeholder="Amount to Approve">
-    <button onclick="approveTokens()">Approve</button>
-
-    <input type="text" id="transferTo" placeholder="Recipient Address">
-    <input type="text" id="transferAmount" placeholder="Amount to Transfer">
-    <button onclick="transferTokens()">Transfer</button>
-
-<script>
-    const contractAddress = "0xa0C1987aD488f0696E745b1211883825b4A70411";
-    const abi = [ 
-        {"inputs":[{"internalType":"uint256","name":"initialSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
-        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value"}],"name":"Approval","type":"event"},
-        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value"}],"name":"Transfer","type":"event"},
-        {"inputs":[{"internalType":"address","name":"owner"},{"internalType":"address","name":"spender"}],"name":"allowance","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
-        {"inputs":[{"internalType":"address","name":"spender"},{"internalType":"uint256","name":"amount"}],"name":"approve","outputs":[{"internalType":"bool","name":""}],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[{"internalType":"address","name":"account"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":""}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"name","outputs":[{"internalType":"string","name":""}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":""}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
-        {"inputs":[{"internalType":"address","name":"recipient"},{"internalType":"uint256","name":"amount"}],"name":"transfer","outputs":[{"internalType":"bool","name":""}],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[{"internalType":"address","name":"sender"},{"internalType":"address","name":"recipient"},{"internalType":"uint256","name":"amount"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":""}],"stateMutability":"nonpayable","type":"function"}
-    ];
-
-    let web3;
-    let provider;
-    let contract;
-    let accounts;
-
-    async function connectWalletConnect() {
-        try {
-            provider = new WalletConnectProvider.default({
-                rpc: { 137: "https://polygon-rpc.com/" }, // Polygon RPC
-                chainId: 137,
-                qrcodeModal: true
-            });
-
-            await provider.enable(); // Open WalletConnect QR code
-            web3 = new Web3(provider);
-            accounts = await web3.eth.getAccounts();
-            contract = new web3.eth.Contract(abi, contractAddress);
-
-            document.getElementById("account").innerText = accounts[0];
-            alert("Connected via WalletConnect: " + accounts[0]);
-
-            provider.on("disconnect", () => {
-                document.getElementById("account").innerText = "Not connected";
-                alert("Wallet disconnected");
-            });
-
-        } catch (error) {
-            console.error(error);
-            alert("Failed to connect: " + error.message);
+                const eventElement = document.createElement("div");
+                eventElement.className = `event-box ${isClosed ? "closed-event" : "open-event"}`;
+                eventElement.innerHTML = `
+                    <p class="event-title">${event[0]}</p>
+                    <p class="status ${isClosed ? "closed-status" : "open-status"}">${eventStatus}</p>
+                    ${result}
+                    <div class="bet-buttons">
+                        <button class="yes-btn">Yes: ${betYes}</button>
+                        <button class="no-btn">No: ${betNo}</button>
+                    </div>
+                `;
+                eventsContainer.appendChild(eventElement);
+            }
         }
-    }
-
-    async function getBalance() {
-        try {
-            let balance = await contract.methods.balanceOf(accounts[0]).call();
-            document.getElementById("balance").innerText = web3.utils.fromWei(balance, 'ether');
-        } catch (error) {
-            alert("Error fetching balance: " + error.message);
-        }
-    }
-
-    async function approveTokens() {
-        try {
-            let amount = document.getElementById("approveAmount").value;
-            amount = web3.utils.toWei(amount, 'ether');
-            await contract.methods.approve(contractAddress, amount).send({ from: accounts[0] });
-            alert("Approved " + amount + " BUBBET");
-        } catch (error) {
-            alert("Approval failed: " + error.message);
-        }
-    }
-
-    async function transferTokens() {
-        try {
-            let to = document.getElementById("transferTo").value;
-            let amount = document.getElementById("transferAmount").value;
-            amount = web3.utils.toWei(amount, 'ether');
-            await contract.methods.transfer(to, amount).send({ from: accounts[0] });
-            alert("Transferred " + amount + " BUBBET to " + to);
-        } catch (error) {
-            alert("Transfer failed: " + error.message);
-        }
-    }
-</script>
-
+        fetchEvents();
+    </script>
 </body>
 </html>
