@@ -22,6 +22,10 @@
             font-size: 28px;
             font-weight: bold;
             box-shadow: 0 4px 15px rgba(255, 215, 0, 0.5);
+            cursor: pointer;
+        }
+        h1:hover {
+            opacity: 0.8;
         }
         h2 {
             font-size: 22px;
@@ -111,12 +115,51 @@
             background-color: #ff5555;
             color: black;
         }
+
+        /* Modal Styles */
+        #chartModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background-color: black;
+            padding: 20px;
+            border-radius: 10px;
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            cursor: pointer;
+            color: white;
+            font-size: 24px;
+        }
     </style>
 </head>
 <body>
-    <h1>BUBBET</h1>
+
+    <h1 onclick="toggleChart()">BUBBET</h1>
     <h2>Events</h2>
     <div class="events-container" id="events"></div>
+
+    <!-- Modal Container -->
+    <div id="chartModal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="toggleChart()">&times;</span>
+            <iframe src="https://www.geckoterminal.com/polygon_pos/pools/0xa0C1987aD488f0696E745b1211883825b4A70411?embed=1&info=0" style="width: 100%; height: 500px; border: none;"></iframe>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script>
         const eventContractAddress = "0x3b05E97EEB98DBe6fB39b62545D3412fA2A792E7";
@@ -124,6 +167,7 @@
             { "inputs": [{ "internalType": "uint256", "name": "eventId", "type": "uint256" }], "name": "getEventDetails", "outputs": [{ "internalType": "string", "name": "name", "type": "string" }, { "internalType": "bool", "name": "resolved", "type": "bool" }, { "internalType": "bool", "name": "outcome", "type": "bool" }, { "internalType": "uint256", "name": "totalBetsOnTrue", "type": "uint256" }, { "internalType": "uint256", "name": "totalBetsOnFalse", "type": "uint256" }], "stateMutability": "view", "type": "function" },
             { "inputs": [], "name": "eventCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }
         ];
+
         async function fetchEvents() {
             const provider = new ethers.providers.JsonRpcProvider("https://polygon-rpc.com");
             const contract = new ethers.Contract(eventContractAddress, eventABI, provider);
@@ -157,6 +201,12 @@
             }
         }
         fetchEvents();
+
+        function toggleChart() {
+            const modal = document.getElementById('chartModal');
+            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        }
     </script>
+
 </body>
 </html>
