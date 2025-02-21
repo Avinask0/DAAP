@@ -9,8 +9,7 @@
 </head>
 <body>
     <h1>BUBBET DApp</h1>
-    <button onclick="connectMetaMask()">Connect MetaMask</button>
-    <button onclick="connectWalletConnect()">Connect WalletConnect</button>
+    <button onclick="connectWalletConnect()">Connect Wallet</button>
     <p>Connected Account: <span id="account">Not connected</span></p>
 
     <button onclick="getBalance()">Get BUBBET Balance</button>
@@ -25,12 +24,12 @@
 
 <script>
     const contractAddress = "0xa0C1987aD488f0696E745b1211883825b4A70411";
-    const abi = [
+    const abi = [ 
         {"inputs":[{"internalType":"uint256","name":"initialSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
         {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value"}],"name":"Approval","type":"event"},
         {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value"}],"name":"Transfer","type":"event"},
-        {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
-        {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount"}],"name":"approve","outputs":[{"internalType":"bool","name":""}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"owner"},{"internalType":"address","name":"spender"}],"name":"allowance","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"address","name":"spender"},{"internalType":"uint256","name":"amount"}],"name":"approve","outputs":[{"internalType":"bool","name":""}],"stateMutability":"nonpayable","type":"function"},
         {"inputs":[{"internalType":"address","name":"account"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
         {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":""}],"stateMutability":"view","type":"function"},
         {"inputs":[],"name":"name","outputs":[{"internalType":"string","name":""}],"stateMutability":"view","type":"function"},
@@ -41,57 +40,68 @@
     ];
 
     let web3;
+    let provider;
     let contract;
     let accounts;
 
-    // Connect MetaMask
-    async function connectMetaMask() {
-        if (window.ethereum) {
-            web3 = new Web3(window.ethereum);
-            accounts = await ethereum.request({ method: 'eth_requestAccounts' });
-            document.getElementById("account").innerText = accounts[0];
+    async function connectWalletConnect() {
+        try {
+            provider = new WalletConnectProvider.default({
+                rpc: { 137: "https://polygon-rpc.com/" } // Polygon mainnet
+            });
+
+            await provider.enable();
+            web3 = new Web3(provider);
+            accounts = await web3.eth.getAccounts();
             contract = new web3.eth.Contract(abi, contractAddress);
-            alert("Connected to MetaMask: " + accounts[0]);
-        } else {
-            alert("Please install MetaMask");
+            
+            document.getElementById("account").innerText = accounts[0];
+            alert("Connected via WalletConnect: " + accounts[0]);
+
+            provider.on("disconnect", () => {
+                document.getElementById("account").innerText = "Not connected";
+                alert("Wallet disconnected");
+            });
+
+        } catch (error) {
+            console.error(error);
+            alert("Failed to connect: " + error.message);
         }
     }
 
-    // Connect WalletConnect
-    async function connectWalletConnect() {
-        const provider = new WalletConnectProvider.default({
-            rpc: { 137: "https://polygon-rpc.com/" } // Polygon mainnet
-        });
-
-        await provider.enable();
-        web3 = new Web3(provider);
-        accounts = await web3.eth.getAccounts();
-        document.getElementById("account").innerText = accounts[0];
-        contract = new web3.eth.Contract(abi, contractAddress);
-        alert("Connected via WalletConnect: " + accounts[0]);
-    }
-
-    // Get BUBBET Token Balance
     async function getBalance() {
-        let balance = await contract.methods.balanceOf(accounts[0]).call();
-        document.getElementById("balance").innerText = web3.utils.fromWei(balance, 'ether');
+        try {
+            let balance = await contract.methods.balanceOf(accounts[0]).call();
+            document.getElementById("balance").innerText = web3.utils.fromWei(balance, 'ether');
+        } catch (error) {
+            console.error(error);
+            alert("Error fetching balance: " + error.message);
+        }
     }
 
-    // Approve Tokens
     async function approveTokens() {
-        let amount = document.getElementById("approveAmount").value;
-        amount = web3.utils.toWei(amount, 'ether');
-        await contract.methods.approve(contractAddress, amount).send({ from: accounts[0] });
-        alert("Approved " + amount + " BUBBET");
+        try {
+            let amount = document.getElementById("approveAmount").value;
+            amount = web3.utils.toWei(amount, 'ether');
+            await contract.methods.approve(contractAddress, amount).send({ from: accounts[0] });
+            alert("Approved " + amount + " BUBBET");
+        } catch (error) {
+            console.error(error);
+            alert("Error approving tokens: " + error.message);
+        }
     }
 
-    // Transfer Tokens
     async function transferTokens() {
-        let to = document.getElementById("transferTo").value;
-        let amount = document.getElementById("transferAmount").value;
-        amount = web3.utils.toWei(amount, 'ether');
-        await contract.methods.transfer(to, amount).send({ from: accounts[0] });
-        alert("Transferred " + amount + " BUBBET to " + to);
+        try {
+            let to = document.getElementById("transferTo").value;
+            let amount = document.getElementById("transferAmount").value;
+            amount = web3.utils.toWei(amount, 'ether');
+            await contract.methods.transfer(to, amount).send({ from: accounts[0] });
+            alert("Transferred " + amount + " BUBBET to " + to);
+        } catch (error) {
+            console.error(error);
+            alert("Error transferring tokens: " + error.message);
+        }
     }
 </script>
 
