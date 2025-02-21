@@ -47,14 +47,16 @@
     async function connectWalletConnect() {
         try {
             provider = new WalletConnectProvider.default({
-                rpc: { 137: "https://polygon-rpc.com/" } // Polygon mainnet
+                rpc: { 137: "https://polygon-rpc.com/" }, // Polygon RPC
+                chainId: 137,
+                qrcodeModal: true
             });
 
-            await provider.enable();
+            await provider.enable(); // Open WalletConnect QR code
             web3 = new Web3(provider);
             accounts = await web3.eth.getAccounts();
             contract = new web3.eth.Contract(abi, contractAddress);
-            
+
             document.getElementById("account").innerText = accounts[0];
             alert("Connected via WalletConnect: " + accounts[0]);
 
@@ -74,7 +76,6 @@
             let balance = await contract.methods.balanceOf(accounts[0]).call();
             document.getElementById("balance").innerText = web3.utils.fromWei(balance, 'ether');
         } catch (error) {
-            console.error(error);
             alert("Error fetching balance: " + error.message);
         }
     }
@@ -86,8 +87,7 @@
             await contract.methods.approve(contractAddress, amount).send({ from: accounts[0] });
             alert("Approved " + amount + " BUBBET");
         } catch (error) {
-            console.error(error);
-            alert("Error approving tokens: " + error.message);
+            alert("Approval failed: " + error.message);
         }
     }
 
@@ -99,8 +99,7 @@
             await contract.methods.transfer(to, amount).send({ from: accounts[0] });
             alert("Transferred " + amount + " BUBBET to " + to);
         } catch (error) {
-            console.error(error);
-            alert("Error transferring tokens: " + error.message);
+            alert("Transfer failed: " + error.message);
         }
     }
 </script>
