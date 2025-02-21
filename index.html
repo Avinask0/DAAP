@@ -1,67 +1,91 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BUBBET DApp</title>
-    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/4.1.0/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@walletconnect/web3-provider@1.6.2/dist/umd/index.min.js"></script>
 </head>
 <body>
     <h1>BUBBET DApp</h1>
-    <button onclick="connectWallet()">Connect Wallet</button>
-    <p>Connected Account: <span id="account">Not connected</span></p><button onclick="getBalance()">Get BUBBET Balance</button>
-<p>Balance: <span id="balance">0</span> BUBBET</p>
+    <button onclick="connectMetaMask()">Connect MetaMask</button>
+    <button onclick="connectWalletConnect()">Connect WalletConnect</button>
+    <p>Connected Account: <span id="account">Not connected</span></p>
 
-<input type="text" id="approveAmount" placeholder="Amount to Approve">
-<button onclick="approveTokens()">Approve</button>
+    <button onclick="getBalance()">Get BUBBET Balance</button>
+    <p>Balance: <span id="balance">0</span> BUBBET</p>
 
-<input type="text" id="transferTo" placeholder="Recipient Address">
-<input type="text" id="transferAmount" placeholder="Amount to Transfer">
-<button onclick="transferTokens()">Transfer</button>
+    <input type="text" id="approveAmount" placeholder="Amount to Approve">
+    <button onclick="approveTokens()">Approve</button>
+
+    <input type="text" id="transferTo" placeholder="Recipient Address">
+    <input type="text" id="transferAmount" placeholder="Amount to Transfer">
+    <button onclick="transferTokens()">Transfer</button>
 
 <script>
     const contractAddress = "0xa0C1987aD488f0696E745b1211883825b4A70411";
     const abi = [
         {"inputs":[{"internalType":"uint256","name":"initialSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
-        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},
-        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},
-        {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-        {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
-        {"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-        {"inputs":[{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
-        {"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
+        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value"}],"name":"Approval","type":"event"},
+        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value"}],"name":"Transfer","type":"event"},
+        {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount"}],"name":"approve","outputs":[{"internalType":"bool","name":""}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"account"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":""}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"name","outputs":[{"internalType":"string","name":""}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":""}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":""}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"address","name":"recipient"},{"internalType":"uint256","name":"amount"}],"name":"transfer","outputs":[{"internalType":"bool","name":""}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"sender"},{"internalType":"address","name":"recipient"},{"internalType":"uint256","name":"amount"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":""}],"stateMutability":"nonpayable","type":"function"}
     ];
-    
+
     let web3;
     let contract;
     let accounts;
-    
-    async function connectWallet() {
+
+    // Connect MetaMask
+    async function connectMetaMask() {
         if (window.ethereum) {
             web3 = new Web3(window.ethereum);
             accounts = await ethereum.request({ method: 'eth_requestAccounts' });
             document.getElementById("account").innerText = accounts[0];
             contract = new web3.eth.Contract(abi, contractAddress);
+            alert("Connected to MetaMask: " + accounts[0]);
         } else {
             alert("Please install MetaMask");
         }
     }
-    
+
+    // Connect WalletConnect
+    async function connectWalletConnect() {
+        const provider = new WalletConnectProvider.default({
+            rpc: { 137: "https://polygon-rpc.com/" } // Polygon mainnet
+        });
+
+        await provider.enable();
+        web3 = new Web3(provider);
+        accounts = await web3.eth.getAccounts();
+        document.getElementById("account").innerText = accounts[0];
+        contract = new web3.eth.Contract(abi, contractAddress);
+        alert("Connected via WalletConnect: " + accounts[0]);
+    }
+
+    // Get BUBBET Token Balance
     async function getBalance() {
         let balance = await contract.methods.balanceOf(accounts[0]).call();
         document.getElementById("balance").innerText = web3.utils.fromWei(balance, 'ether');
     }
-    
+
+    // Approve Tokens
     async function approveTokens() {
         let amount = document.getElementById("approveAmount").value;
         amount = web3.utils.toWei(amount, 'ether');
         await contract.methods.approve(contractAddress, amount).send({ from: accounts[0] });
         alert("Approved " + amount + " BUBBET");
     }
-    
+
+    // Transfer Tokens
     async function transferTokens() {
         let to = document.getElementById("transferTo").value;
         let amount = document.getElementById("transferAmount").value;
