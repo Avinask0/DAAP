@@ -1,109 +1,75 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple DApp with MetaMask</title>
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.6.1/dist/web3.min.js"></script>
+    <title>BUBBET DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
 </head>
 <body>
-    <h1>Simple Storage DApp</h1>
+    <h1>BUBBET DApp</h1>
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <p>Connected Account: <span id="account">Not connected</span></p><button onclick="getBalance()">Get BUBBET Balance</button>
+<p>Balance: <span id="balance">0</span> BUBBET</p>
 
-    <button onclick="connectMetaMask()">Connect MetaMask</button>
-    <p id="walletAddress">Not Connected</p>
+<input type="text" id="approveAmount" placeholder="Amount to Approve">
+<button onclick="approveTokens()">Approve</button>
 
-    <input type="number" id="value" placeholder="Enter value">
-    <button onclick="storeValue()">Store Value</button>
-    <button onclick="getValue()">Get Value</button>
-    <p id="output"></p>
+<input type="text" id="transferTo" placeholder="Recipient Address">
+<input type="text" id="transferAmount" placeholder="Amount to Transfer">
+<button onclick="transferTokens()">Transfer</button>
 
-    <script>
-        let web3;
-        let contract;
-        let userAccount;
-
-        const contractAddress = "0x62A120976d9002Cda6091347B5774819d6126e7a"; // Your contract address
-        const abi = [
-            {
-                "inputs": [{"internalType": "uint256", "name": "x", "type": "uint256"}],
-                "name": "set",
-                "outputs": [],
-                "stateMutability": "public",
-                "type": "function"
-            },
-            {
-                "inputs": [],
-                "name": "get",
-                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-                "stateMutability": "view",
-                "type": "function"
-            }
-        ]; // Your contract ABI
-
-        async function connectMetaMask() {
-            if (typeof window.ethereum !== 'undefined') {
-                console.log("MetaMask is detected.");
-                try {
-                    console.log("Requesting MetaMask connection...");
-                    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-
-                    if (accounts.length > 0) {
-                        userAccount = accounts[0];
-                        document.getElementById("walletAddress").innerText = "Connected: " + userAccount;
-
-                        // Initialize Web3
-                        web3 = new Web3(window.ethereum);
-                        contract = new web3.eth.Contract(abi, contractAddress);
-
-                        console.log("Connected account:", userAccount);
-
-                        // Check Network
-                        const chainId = await window.ethereum.request({ method: "eth_chainId" });
-                        console.log("Current Chain ID:", chainId);
-                        if (chainId !== "0x89" && chainId !== "0x13881") {
-                            alert("Switch to the Polygon network in MetaMask!");
-                        }
-                    } else {
-                        alert("No accounts found. Try again.");
-                    }
-                } catch (error) {
-                    console.error("MetaMask connection error:", error);
-                    alert("Connection failed: " + error.message);
-                }
-            } else {
-                alert("MetaMask is not installed. Redirecting...");
-                window.location.href = "https://metamask.app.link/dapp/YOUR_DAPP_URL";
-            }
+<script>
+    const contractAddress = "0xa0C1987aD488f0696E745b1211883825b4A70411";
+    const abi = [
+        {"inputs":[{"internalType":"uint256","name":"initialSupply","type":"uint256"}],"stateMutability":"nonpayable","type":"constructor"},
+        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},
+        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},
+        {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
+    ];
+    
+    let web3;
+    let contract;
+    let accounts;
+    
+    async function connectWallet() {
+        if (window.ethereum) {
+            web3 = new Web3(window.ethereum);
+            accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+            document.getElementById("account").innerText = accounts[0];
+            contract = new web3.eth.Contract(abi, contractAddress);
+        } else {
+            alert("Please install MetaMask");
         }
+    }
+    
+    async function getBalance() {
+        let balance = await contract.methods.balanceOf(accounts[0]).call();
+        document.getElementById("balance").innerText = web3.utils.fromWei(balance, 'ether');
+    }
+    
+    async function approveTokens() {
+        let amount = document.getElementById("approveAmount").value;
+        amount = web3.utils.toWei(amount, 'ether');
+        await contract.methods.approve(contractAddress, amount).send({ from: accounts[0] });
+        alert("Approved " + amount + " BUBBET");
+    }
+    
+    async function transferTokens() {
+        let to = document.getElementById("transferTo").value;
+        let amount = document.getElementById("transferAmount").value;
+        amount = web3.utils.toWei(amount, 'ether');
+        await contract.methods.transfer(to, amount).send({ from: accounts[0] });
+        alert("Transferred " + amount + " BUBBET to " + to);
+    }
+</script>
 
-        async function storeValue() {
-            if (!userAccount) {
-                alert("Please connect MetaMask first.");
-                return;
-            }
-            const value = document.getElementById("value").value;
-            try {
-                await contract.methods.set(value).send({ from: userAccount });
-                alert("Value stored successfully.");
-            } catch (error) {
-                console.error("Transaction failed", error);
-                alert("Transaction failed. Please check your wallet.");
-            }
-        }
-
-        async function getValue() {
-            if (!contract) {
-                alert("Please connect MetaMask first.");
-                return;
-            }
-            try {
-                const result = await contract.methods.get().call();
-                document.getElementById("output").innerText = "Stored Value: " + result;
-            } catch (error) {
-                console.error("Read failed", error);
-                alert("Failed to read value.");
-            }
-        }
-    </script>
 </body>
 </html>
