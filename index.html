@@ -32,6 +32,25 @@
             color: #bbb;
             margin-top: 8px;
         }
+        .filter-buttons {
+            margin: 10px 0;
+        }
+        .filter-buttons button {
+            padding: 8px 12px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            background-color: #444;
+            color: white;
+            transition: 0.3s;
+        }
+        .filter-buttons button:hover {
+            background-color: #FFD700;
+            color: black;
+        }
         .events-container {
             display: flex;
             flex-wrap: wrap;
@@ -79,86 +98,20 @@
         .closed-status {
             background-color: crimson;
         }
-        .result {
-            font-weight: bold;
-            color: #ffcc00;
-            margin-top: 5px;
-        }
-        .bet-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 12px;
-        }
-        .yes-btn, .no-btn {
-            padding: 10px 14px;
-            border: none;
-            color: white;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 48%;
-            text-align: center;
-            transition: all 0.3s ease-in-out;
-        }
-        .yes-btn {
-            background-color: green;
-        }
-        .yes-btn:hover {
-            background-color: #00ff00;
-            color: black;
-        }
-        .no-btn {
-            background-color: red;
-        }
-        .no-btn:hover {
-            background-color: #ff5555;
-            color: black;
-        }
-
-        /* Modal Styles */
-        #chartModal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: black;
-            padding: 20px;
-            border-radius: 10px;
-            position: relative;
-            width: 90%;
-            max-width: 800px;
-        }
-        .close-btn {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-            cursor: pointer;
-            color: white;
-            font-size: 24px;
-        }
     </style>
 </head>
 <body>
 
     <h1 onclick="toggleChart()">BUBBET</h1>
     <h2>Events</h2>
-    <div class="events-container" id="events"></div>
-
-    <!-- Modal Container -->
-    <div id="chartModal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="toggleChart()">&times;</span>
-            <iframe src="https://www.geckoterminal.com/polygon_pos/pools/0xa0C1987aD488f0696E745b1211883825b4A70411?embed=1&info=0" style="width: 100%; height: 500px; border: none;"></iframe>
-        </div>
+    
+    <!-- Filter Buttons -->
+    <div class="filter-buttons">
+        <button onclick="setFilter('open')">Open</button>
+        <button onclick="setFilter('closed')">Closed</button>
     </div>
+
+    <div class="events-container" id="events"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.umd.min.js"></script>
     <script>
@@ -168,44 +121,41 @@
             { "inputs": [], "name": "eventCount", "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }], "stateMutability": "view", "type": "function" }
         ];
 
+        let selectedFilter = "open"; // Default to showing only open events
+
         async function fetchEvents() {
             const provider = new ethers.providers.JsonRpcProvider("https://polygon-rpc.com");
             const contract = new ethers.Contract(eventContractAddress, eventABI, provider);
             const eventCount = await contract.eventCount();
             const eventsContainer = document.getElementById("events");
             eventsContainer.innerHTML = "";
+
             for (let i = 1; i <= eventCount; i++) {
                 const event = await contract.getEventDetails(i);
                 const isClosed = event[1];
-                const eventStatus = isClosed ? "Closed" : "Open";
-                const betYes = (parseInt(event[3]) / 1e18).toFixed(2);
-                const betNo = (parseInt(event[4]) / 1e18).toFixed(2);
-                
-                let result = "";
-                if (isClosed) {
-                    result = `<p class="result">Result: ${event[2] ? "Yes" : "No"}</p>`;
+
+                // Apply filter logic
+                if ((selectedFilter === "open" && isClosed) || (selectedFilter === "closed" && !isClosed)) {
+                    continue;
                 }
 
                 const eventElement = document.createElement("div");
                 eventElement.className = `event-box ${isClosed ? "closed-event" : "open-event"}`;
                 eventElement.innerHTML = `
                     <p class="event-title">${event[0]}</p>
-                    <p class="status ${isClosed ? "closed-status" : "open-status"}">${eventStatus}</p>
-                    ${result}
-                    <div class="bet-buttons">
-                        <button class="yes-btn">Yes: ${betYes}</button>
-                        <button class="no-btn">No: ${betNo}</button>
-                    </div>
+                    <p class="status ${isClosed ? "closed-status" : "open-status"}">${isClosed ? "Closed" : "Open"}</p>
                 `;
                 eventsContainer.appendChild(eventElement);
             }
         }
-        fetchEvents();
 
-        function toggleChart() {
-            const modal = document.getElementById('chartModal');
-            modal.style.display = modal.style.display === 'flex' ? 'none' : 'flex';
+        function setFilter(filter) {
+            selectedFilter = filter;
+            fetchEvents();
         }
+
+        // Load Open Events by Default
+        fetchEvents();
     </script>
 
 </body>
